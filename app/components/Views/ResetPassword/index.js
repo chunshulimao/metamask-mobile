@@ -560,8 +560,8 @@ class ResetPassword extends PureComponent {
 
 	learnMore = () => {
 		this.props.navigation.push('Webview', {
-			url: 'https://metamask.zendesk.com/hc/en-us/articles/360039616872-How-can-I-reset-my-password-',
-			title: 'metamask.zendesk.com'
+			url: AppConstants.ARTICLES_URL + 'How-can-I-reset-my-password.html',
+			title: 'ARTICLES'
 		});
 	};
 

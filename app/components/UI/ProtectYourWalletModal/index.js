@@ -7,7 +7,7 @@ import { connect } from 'react-redux';
 import { protectWalletModalNotVisible } from '../../../actions/user';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { strings } from '../../../../locales/i18n';
-
+import AppConstants from '../../../core/AppConstants';
 const protectWalletImage = require('../../../images/protect-wallet.jpg'); // eslint-disable-line
 
 const styles = StyleSheet.create({
@@ -72,7 +72,7 @@ class ProtectYourWalletModal extends PureComponent {
 	onLearnMore = () => {
 		this.props.protectWalletModalNotVisible();
 		this.props.navigation.navigate('Webview', {
-			url: 'https://metamask.zendesk.com/hc/en-us/articles/360015489591-Basic-Safety-Tips',
+			url: AppConstants.ARTICLES_URL + 'Basic-Safety-Tips.html',
 			title: strings('protect_wallet_modal.title')
 		});
 	};

@@ -25,7 +25,7 @@ import Analytics from '../../../core/Analytics';
 import { ANALYTICS_EVENT_OPTS } from '../../../util/analytics';
 import { clearOnboardingEvents } from '../../../actions/onboarding';
 import { ONBOARDING_WIZARD, METRICS_OPT_IN, DENIED, AGREED } from '../../../constants/storage';
-
+import AppConstants from '../../../core/AppConstants';
 const styles = StyleSheet.create({
 	root: {
 		...baseStyles.flexGrow
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
 	}
 });
 
-const PRIVACY_POLICY = 'https://metamask.io/privacy.html';
+const PRIVACY_POLICY = AppConstants.ARTICLES_URL + 'Privacy.html';
 /**
  * View that is displayed in the flow to agree to metrics
  */

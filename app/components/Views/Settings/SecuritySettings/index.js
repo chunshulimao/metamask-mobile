@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
 		...fontStyles.normal,
 		color: colors.fontPrimary,
 		fontSize: 20,
-		lineHeight: 20
+		lineHeight: 23
 	},
 	heading: {
 		fontSize: 24,
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
 		...fontStyles.normal,
 		color: colors.grey500,
 		fontSize: 14,
-		lineHeight: 20,
+		lineHeight: 23,
 		marginTop: 12
 	},
 	switchElement: {

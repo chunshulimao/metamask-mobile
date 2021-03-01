@@ -21,7 +21,7 @@ import { NavigationActions } from 'react-navigation';
 import { connect } from 'react-redux';
 import Confetti from '../../UI/Confetti';
 import { ONBOARDING_WIZARD, METRICS_OPT_IN } from '../../../constants/storage';
-
+import AppConstants from '../../../core/AppConstants';
 const styles = StyleSheet.create({
 	mainWrapper: {
 		backgroundColor: colors.white,
@@ -153,7 +153,7 @@ class SyncWithExtensionSuccess extends PureComponent {
 
 	learnMore = () => {
 		this.props.navigation.navigate('Webview', {
-			url: 'https://metamask.zendesk.com/hc/en-us/articles/360015489591-Basic-Safety-Tips',
+			url: AppConstants.ARTICLES_URL + 'Basic-Safety-Tips.html',
 			title: strings('drawer.metamask_support')
 		});
 	};

@@ -20,7 +20,7 @@ import { strings } from '../../../../locales/i18n';
 import Device from '../../../util/Device';
 import { importAccountFromPrivateKey } from '../../../util/address';
 import PreventScreenshot from '../../../core/PreventScreenshot';
-
+import AppConstants from '../../../core/AppConstants';
 const styles = StyleSheet.create({
 	mainWrapper: {
 		backgroundColor: colors.blue000
@@ -167,7 +167,7 @@ export default class ImportPrivateKey extends PureComponent {
 
 	learnMore = () =>
 		this.props.navigation.navigate('Webview', {
-			url: 'https://metamask.zendesk.com/hc/en-us/articles/360015289932-What-are-imported-accounts-',
+			url: AppConstants.ARTICLES_URL + 'What-are-imported-accounts.html',
 			title: strings('drawer.metamask_support')
 		});
 

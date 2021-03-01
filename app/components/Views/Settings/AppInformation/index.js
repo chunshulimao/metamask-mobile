@@ -14,7 +14,7 @@ import { colors, fontStyles } from '../../../../styles/common';
 import PropTypes from 'prop-types';
 import { strings } from '../../../../../locales/i18n';
 import { getNavigationOptionsTitle } from '../../../UI/Navbar';
-
+import AppConstants from '../../../../core/AppConstants';
 const styles = StyleSheet.create({
 	wrapper: {
 		backgroundColor: colors.white,
@@ -103,12 +103,12 @@ export default class AppInformation extends PureComponent {
 	};
 
 	onPrivacyPolicy = () => {
-		const url = 'https://metamask.io/privacy.html';
+		const url = AppConstants.ARTICLES_URL + 'Privacy.html';
 		this.goTo(url, strings('app_information.privacy_policy'));
 	};
 
 	onTermsOfUse = () => {
-		const url = 'https://metamask.io/terms.html';
+		const url = AppConstants.ARTICLES_URL + 'Terms.html';
 		this.goTo(url, strings('app_information.terms_of_use'));
 	};
 
@@ -147,21 +147,21 @@ export default class AppInformation extends PureComponent {
 					<TouchableOpacity onPress={this.onTermsOfUse}>
 						<Text style={styles.link}>{strings('app_information.terms_of_use')}</Text>
 					</TouchableOpacity>
-					<TouchableOpacity onPress={this.onAttributions}>
-						<Text style={styles.link}>{strings('app_information.attributions')}</Text>
-					</TouchableOpacity>
+					{/*<TouchableOpacity onPress={this.onAttributions}>*/}
+					{/*	<Text style={styles.link}>{strings('app_information.attributions')}</Text>*/}
+					{/*</TouchableOpacity>*/}
 				</View>
 				<View style={styles.division} />
 				<View style={styles.links}>
-					<TouchableOpacity onPress={this.onSupportCenter}>
-						<Text style={styles.link}>{strings('app_information.support_center')}</Text>
-					</TouchableOpacity>
+					{/*<TouchableOpacity onPress={this.onSupportCenter}>*/}
+					{/*	<Text style={styles.link}>{strings('app_information.support_center')}</Text>*/}
+					{/*</TouchableOpacity>*/}
 					<TouchableOpacity onPress={this.onWebSite}>
 						<Text style={styles.link}>{strings('app_information.web_site')}</Text>
 					</TouchableOpacity>
-					<TouchableOpacity onPress={this.onContactUs}>
-						<Text style={styles.link}>{strings('app_information.contact_us')}</Text>
-					</TouchableOpacity>
+					{/*<TouchableOpacity onPress={this.onContactUs}>*/}
+					{/*	<Text style={styles.link}>{strings('app_information.contact_us')}</Text>*/}
+					{/*</TouchableOpacity>*/}
 				</View>
 			</ScrollView>
 		</SafeAreaView>

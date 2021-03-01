@@ -2,7 +2,7 @@ import Device from '../util/Device';
 import { MAINNET, RINKEBY } from '../constants/network';
 
 const DEVELOPMENT = 'development';
-
+const BASE_URL = 'http://140.143.17.71:9500/ev/';
 export default {
 	IS_DEV: process.env?.NODE_ENV === DEVELOPMENT,
 	DEFAULT_LOCK_TIMEOUT: 30000,
@@ -29,7 +29,8 @@ export default {
 	},
 	MM_UNIVERSAL_LINK_HOST: 'metamask.app.link',
 	SAI_ADDRESS: '0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359',
-	HOMEPAGE_URL: 'https://home.metamask.io/',
+	HOMEPAGE_URL: 'http://140.143.17.71:9501/',
+	ARTICLES_URL: BASE_URL + 'articles/',
 	ZERO_ADDRESS: '0x0000000000000000000000000000000000000000',
 	INSTAPAY_GAS_PONDERATOR: 1.2,
 	USER_AGENT: Device.isAndroid()

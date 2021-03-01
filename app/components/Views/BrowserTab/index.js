@@ -63,7 +63,7 @@ import ErrorBoundary from '../ErrorBoundary';
 import { RPC } from '../../../constants/network';
 
 const { HOMEPAGE_URL, USER_AGENT, NOTIFICATION_NAMES } = AppConstants;
-const HOMEPAGE_HOST = 'home.metamask.io';
+//const HOMEPAGE_HOST = '140.143.17.71:9501';
 const MM_MIXPANEL_TOKEN = process.env.MM_MIXPANEL_TOKEN;
 
 const ANIMATION_TIMING = 300;
@@ -317,7 +317,7 @@ export const BrowserTab = props => {
 	const isHomepage = useCallback((checkUrl = null) => {
 		const currentPage = checkUrl || url.current;
 		const { host: currentHost } = getUrlObj(currentPage);
-		return currentHost === HOMEPAGE_HOST;
+		return currentHost === getUrlObj(HOMEPAGE_URL).host;
 	}, []);
 
 	/**

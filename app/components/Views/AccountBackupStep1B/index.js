@@ -12,7 +12,7 @@ import ActionModal from '../../UI/ActionModal';
 import SeedphraseModal from '../../UI/SeedphraseModal';
 import { getOnboardingNavbarOptions } from '../../UI/Navbar';
 import { CHOOSE_PASSWORD_STEPS } from '../../../constants/onboarding';
-
+import AppConstants from '../../../core/AppConstants';
 const explain_backup_seedphrase = require('../../../images/explain-backup-seedphrase.png'); // eslint-disable-line
 
 const IMAGE_1_RATIO = 162.8 / 138;
@@ -200,7 +200,7 @@ const AccountBackupStep1B = props => {
 	const learnMore = () => {
 		setWhySecureWalletModal(false);
 		props.navigation.navigate('Webview', {
-			url: 'https://metamask.zendesk.com/hc/en-us/articles/360015489591-Basic-Safety-Tips',
+			url: AppConstants.ARTICLES_URL + 'Basic-Safety-Tips.html',
 			title: strings('drawer.metamask_support')
 		});
 	};

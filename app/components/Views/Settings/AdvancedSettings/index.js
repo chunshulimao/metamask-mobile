@@ -36,13 +36,13 @@ const styles = StyleSheet.create({
 		...fontStyles.normal,
 		color: colors.fontPrimary,
 		fontSize: 20,
-		lineHeight: 20
+		lineHeight: 23
 	},
 	desc: {
 		...fontStyles.normal,
 		color: colors.grey500,
 		fontSize: 14,
-		lineHeight: 20,
+		lineHeight: 23,
 		marginTop: 12
 	},
 	marginTop: {
@@ -289,25 +289,25 @@ class AdvancedSettings extends PureComponent {
 								{strings('app_settings.reset_account_button')}
 							</StyledButton>
 						</View>
-						<View style={[styles.setting]}>
-							<Text style={styles.title}>{strings('app_settings.ipfs_gateway')}</Text>
-							<Text style={styles.desc}>{strings('app_settings.ipfs_gateway_desc')}</Text>
-							<View style={styles.picker}>
-								{this.state.gotAvailableGateways ? (
-									<SelectComponent
-										selectedValue={ipfsGateway}
-										defaultValue={strings('app_settings.ipfs_gateway_down')}
-										onValueChange={this.setIpfsGateway}
-										label={strings('app_settings.ipfs_gateway')}
-										options={onlineIpfsGateways}
-									/>
-								) : (
-									<View style={styles.ipfsGatewayLoadingWrapper}>
-										<ActivityIndicator size="small" />
-									</View>
-								)}
-							</View>
-						</View>
+						{/*<View style={[styles.setting]}>*/}
+						{/*	<Text style={styles.title}>{strings('app_settings.ipfs_gateway')}</Text>*/}
+						{/*	<Text style={styles.desc}>{strings('app_settings.ipfs_gateway_desc')}</Text>*/}
+						{/*	<View style={styles.picker}>*/}
+						{/*		{this.state.gotAvailableGateways ? (*/}
+						{/*			<SelectComponent*/}
+						{/*				selectedValue={ipfsGateway}*/}
+						{/*				defaultValue={strings('app_settings.ipfs_gateway_down')}*/}
+						{/*				onValueChange={this.setIpfsGateway}*/}
+						{/*				label={strings('app_settings.ipfs_gateway')}*/}
+						{/*				options={onlineIpfsGateways}*/}
+						{/*			/>*/}
+						{/*		) : (*/}
+						{/*			<View style={styles.ipfsGatewayLoadingWrapper}>*/}
+						{/*				<ActivityIndicator size="small" />*/}
+						{/*			</View>*/}
+						{/*		)}*/}
+						{/*	</View>*/}
+						{/*</View>*/}
 						<View style={styles.setting}>
 							<Text style={styles.title}>{strings('app_settings.show_hex_data')}</Text>
 							<Text style={styles.desc}>{strings('app_settings.hex_desc')}</Text>

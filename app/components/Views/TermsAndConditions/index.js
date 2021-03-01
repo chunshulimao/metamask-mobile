@@ -3,8 +3,8 @@ import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import PropTypes from 'prop-types';
 import { colors, fontStyles } from '../../../styles/common';
 import { strings } from '../../../../locales/i18n';
-
-const TERMS_AND_CONDITIONS = 'https://metamask.io/terms.html';
+import AppConstants from '../../../core/AppConstants';
+const TERMS_AND_CONDITIONS = AppConstants.ARTICLES_URL + 'Terms.html';
 
 const styles = StyleSheet.create({
 	mainWrapper: {
