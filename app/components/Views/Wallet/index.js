@@ -18,7 +18,8 @@ import { getTicker } from '../../../util/transactions';
 import OnboardingWizard from '../../UI/OnboardingWizard';
 import { showTransactionNotification, hideTransactionNotification } from '../../../actions/notification';
 import ErrorBoundary from '../ErrorBoundary';
-
+import { getNetByTicker } from '../../../util/networks';
+const ethLogo = require('../../../images/eth-logo.png'); // eslint-disable-line
 const styles = StyleSheet.create({
 	wrapper: {
 		flex: 1,
@@ -184,9 +185,10 @@ class Wallet extends PureComponent {
 					name: 'Ether',
 					symbol: getTicker(ticker),
 					isETH: true,
+					isRpc: ticker !== 'ETH',
 					balance,
 					balanceFiat: weiToFiat(hexToBN(accounts[selectedAddress].balance), conversionRate, currentCurrency),
-					logo: '../images/eth-logo.png'
+					logo: (getNetByTicker(ticker) && getNetByTicker(ticker).logo) || ethLogo
 				},
 				...tokens
 			];

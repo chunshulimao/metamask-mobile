@@ -6,7 +6,7 @@ import ActionSheet from 'react-native-actionsheet';
 import { colors, fontStyles } from '../../../../styles/common';
 import { getNavigationOptionsTitle } from '../../../UI/Navbar';
 import { strings } from '../../../../../locales/i18n';
-import Networks, { getAllNetworks } from '../../../../util/networks';
+import Networks, { getAllNetworks, getColorByName } from '../../../../util/networks';
 import StyledButton from '../../../UI/StyledButton';
 import Engine from '../../../../core/Engine';
 import { MAINNET, RPC } from '../../../../constants/network';
@@ -157,7 +157,7 @@ class NetworksSettings extends PureComponent {
 	renderRpcNetworks = () => {
 		const { frequentRpcList } = this.props;
 		return frequentRpcList.map(({ rpcUrl, nickname }, i) => {
-			const { color, name } = { name: nickname || rpcUrl, color: null };
+			const { color, name } = { name: nickname || rpcUrl, color: getColorByName(nickname) };
 
 			return this.networkElement(name, color, i, rpcUrl, true);
 		});

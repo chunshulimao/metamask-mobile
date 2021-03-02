@@ -5,11 +5,18 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { InteractionManager, ScrollView, TouchableOpacity, StyleSheet, Text, View, SafeAreaView } from 'react-native';
 import { colors, fontStyles } from '../../../styles/common';
 import { strings } from '../../../../locales/i18n';
-import Networks, { getAllNetworks, isSafeChainId } from '../../../util/networks';
+import Networks, {
+	getAllNetworks,
+	isSafeChainId,
+	getColorByName,
+	getDefautRpcNetworks,
+	isprivateConnection
+} from '../../../util/networks';
 import { connect } from 'react-redux';
 import Analytics from '../../../core/Analytics';
 import { ANALYTICS_EVENT_OPTS } from '../../../util/analytics';
-import { MAINNET, RPC } from '../../../constants/network';
+import { HUOBI, MAINNET, RPC } from '../../../constants/network';
+import URL from 'url-parse';
 
 const styles = StyleSheet.create({
 	wrapper: {
@@ -164,7 +171,39 @@ export class NetworkList extends PureComponent {
 	closeModal = () => {
 		this.props.onClose(true);
 	};
-
+	// removeNetwork = () => {
+	// 	// Check if it's the selected network and then switch to mainnet first
+	// 	const { PreferencesController } = Engine.context;
+	// 	console.log('删除ela');
+	// 	PreferencesController.removeFromFrequentRpcList('https://http-mainnet.hecochain.com');
+	// };
+	addRpcUrl = async props => {
+		//this.removeNetwork();
+		const { frequentRpcList } = props;
+		const { PreferencesController } = Engine.context;
+		const rpc =
+			frequentRpcList && frequentRpcList.length > 0
+				? frequentRpcList.find(
+						//未添加过火币的ela 说明所有默认rpc都没添加
+						({ rpcUrl }) => rpcUrl === Networks[HUOBI].rpcUrl
+						// eslint-disable-next-line no-mixed-spaces-and-tabs
+				  )
+				: null;
+		if (!rpc) {
+			const rpcnetWorks = getDefautRpcNetworks();
+			// eslint-disable-next-line array-callback-return
+			rpcnetWorks.map(netWork => {
+				const { rpcUrl, chainId, name: nickname, exploreUrl: blockExplorerUrl, shortName: ticker } = netWork;
+				const url = new URL(rpcUrl);
+				!isprivateConnection(url.hostname) && url.set('protocol', 'https:');
+				PreferencesController.addToFrequentRpcList(url.href, String(chainId), ticker, nickname, {
+					blockExplorerUrl
+				});
+			});
+			return true;
+		}
+		return false;
+	};
 	onSetRpcTarget = async rpcTarget => {
 		const { frequentRpcList } = this.props;
 		const { NetworkController, CurrencyRateController } = Engine.context;
@@ -183,6 +222,22 @@ export class NetworkList extends PureComponent {
 		NetworkController.setRpcTarget(rpcUrl, chainId, ticker, nickname);
 		this.props.onClose(false);
 	};
+	/*	onSetDefaultTarget = async rpcTarget => {
+		const { NetworkController, CurrencyRateController } = Engine.context;
+		const rpc = getDefautRpcNetworks().find(({ rpcUrl }) => rpcUrl === rpcTarget);
+		const { rpcUrl, chainId, shortName: ticker, name: nickname } = rpc;
+
+		// If the network does not have chainId then show invalid custom network alert
+		const chainIdNumber = parseInt(chainId, 10);
+		if (!isSafeChainId(chainIdNumber)) {
+			this.props.onClose(false);
+			this.props.showInvalidCustomNetworkAlert(rpcTarget);
+			return;
+		}
+		CurrencyRateController.configure({ nativeCurrency: ticker });
+		NetworkController.setRpcTarget(rpcUrl, chainId, ticker, nickname);
+		this.props.onClose(false);
+	};*/
 
 	networkElement = (selected, onPress, name, color, i, network) => (
 		<TouchableOpacity
@@ -207,11 +262,21 @@ export class NetworkList extends PureComponent {
 			return this.networkElement(selected, this.onNetworkChange, name, color, i, network);
 		});
 	};
-
+	/*renderDefaultNetworks = () => {
+		const { provider } = this.props;
+		return getDefautRpcNetworks().map(({ name: nickname, rpcUrl }, i) => {
+			const { color, name } = { name: nickname || rpcUrl, color: getColorByName(nickname) };
+			const selected =
+				provider.rpcTarget === rpcUrl && provider.type === RPC ? (
+					<Icon name="check" size={20} color={colors.fontSecondary} />
+				) : null;
+			return this.networkElement(selected, this.onSetDefaultTarget, name, color, i, rpcUrl);
+		});
+	};*/
 	renderRpcNetworks = () => {
 		const { frequentRpcList, provider } = this.props;
 		return frequentRpcList.map(({ nickname, rpcUrl }, i) => {
-			const { color, name } = { name: nickname || rpcUrl, color: null };
+			const { color, name } = { name: nickname || rpcUrl, color: getColorByName(nickname) };
 			const selected =
 				provider.rpcTarget === rpcUrl && provider.type === RPC ? (
 					<Icon name="check" size={20} color={colors.fontSecondary} />
@@ -245,7 +310,10 @@ export class NetworkList extends PureComponent {
 			</View>
 		);
 	}
-
+	constructor(props) {
+		super(props);
+		this.addRpcUrl(props);
+	}
 	render = () => (
 		<SafeAreaView style={styles.wrapper} testID={'networks-list'}>
 			<View style={styles.titleWrapper}>
@@ -261,6 +329,7 @@ export class NetworkList extends PureComponent {
 					</Text>
 				</View>
 				{this.renderOtherNetworks()}
+				{/*{this.renderDefaultNetworks()}*/}
 				{this.renderRpcNetworks()}
 			</ScrollView>
 			<View style={styles.footer}>

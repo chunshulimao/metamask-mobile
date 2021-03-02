@@ -198,10 +198,12 @@ class Tokens extends PureComponent {
 				onLongPress={asset.isETH ? null : this.showRemoveMenu}
 				asset={asset}
 			>
-				{asset.isETH ? (
+				{asset.isETH && !asset.isRpc ? (
 					<FadeIn placeholderStyle={{ backgroundColor: colors.white }}>
 						<Image source={ethLogo} style={styles.ethLogo} testID={'eth-logo'} />
 					</FadeIn>
+				) : asset.isRpc ? (
+					<Image source={logo} style={styles.ethLogo} />
 				) : (
 					<TokenImage asset={asset} containerStyle={styles.ethLogo} />
 				)}

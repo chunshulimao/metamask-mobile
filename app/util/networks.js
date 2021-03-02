@@ -1,7 +1,7 @@
 import { colors } from '../styles/common';
 import URL from 'url-parse';
 import AppConstants from '../core/AppConstants';
-import { MAINNET, ROPSTEN, KOVAN, RINKEBY, GOERLI, RPC } from '../../app/constants/network';
+import { MAINNET, ROPSTEN, KOVAN, RINKEBY, GOERLI, RPC, HUOBI, BINANCE, ELA } from '../../app/constants/network';
 
 /**
  * List of the supported networks
@@ -10,6 +10,10 @@ import { MAINNET, ROPSTEN, KOVAN, RINKEBY, GOERLI, RPC } from '../../app/constan
  * This values are used in certain places like
  * navbar and the network switcher.
  */
+const elaLogo = require('../images/ela-logo.png'); // eslint-disable-line
+const huobiLogo = require('../images/huobi-logo.png'); // eslint-disable-line
+const bnbLogo = require('../images/bnb-logo.png'); // eslint-disable-line
+
 const NetworkList = {
 	[MAINNET]: {
 		name: 'Ethereum Main Network',
@@ -50,6 +54,36 @@ const NetworkList = {
 		name: 'Private Network',
 		shortName: 'Private',
 		color: colors.grey000
+	},
+	[ELA]: {
+		name: 'Elastos Ethereum Sidechain',
+		shortName: 'ELA',
+		networkId: 20,
+		chainId: 20,
+		rpcUrl: 'https://api.elastos.io/eth',
+		exploreUrl: 'https://explorer.elaeth.io',
+		color: '#7057ff',
+		logo: elaLogo
+	},
+	[HUOBI]: {
+		name: 'Huobi ECO Chain (HECO)',
+		shortName: 'HT',
+		networkId: 128,
+		chainId: 128,
+		color: '#564a8d',
+		rpcUrl: 'https://http-mainnet.hecochain.com',
+		exploreUrl: 'https://scan.hecochain.com',
+		logo: huobiLogo
+	},
+	[BINANCE]: {
+		name: 'Binance Smart Chain (BSC)',
+		shortName: 'BNB',
+		networkId: 56,
+		chainId: 56,
+		color: '#994a8d',
+		rpcUrl: 'https://bsc-dataseed.binance.org',
+		exploreUrl: 'https://bscscan.com',
+		logo: bnbLogo
 	}
 };
 
@@ -57,7 +91,8 @@ const NetworkListKeys = Object.keys(NetworkList);
 
 export default NetworkList;
 
-export const getAllNetworks = () => NetworkListKeys.filter(name => name !== RPC);
+//export const getAllNetworks = () => NetworkListKeys.filter(name => name !== RPC);
+export const getAllNetworks = () => [MAINNET];
 
 export const isMainNet = (network, provider) => {
 	const is_main = network?.provider?.type === MAINNET || network === String(1);
@@ -83,6 +118,7 @@ export function hasBlockExplorer(key) {
 }
 
 export function isKnownNetwork(id) {
+	id = parseInt(id);
 	const knownNetworks = NetworkListKeys.map(key => NetworkList[key].networkId).filter(id => id !== undefined);
 	return knownNetworks.includes(parseInt(id, 10));
 }
@@ -124,4 +160,32 @@ export function getBlockExplorerName(blockExplorerUrl) {
 
 export function isSafeChainId(chainId) {
 	return Number.isSafeInteger(chainId) && chainId > 0 && chainId <= AppConstants.MAX_SAFE_CHAIN_ID;
+}
+
+export function getColorByName(name) {
+	switch (name) {
+		case 'Elastos Ethereum Sidechain':
+			return NetworkList[ELA].color;
+		case 'Huobi ECO Chain (HECO)':
+			return NetworkList[HUOBI].color || null;
+		case 'Binance Smart Chain (BSC)':
+			return NetworkList[BINANCE].color;
+		default:
+			return null;
+	}
+}
+export function getNetByTicker(ticker) {
+	switch (ticker) {
+		case 'ELA':
+			return NetworkList[ELA];
+		case 'HT':
+			return NetworkList[HUOBI];
+		case 'BNB':
+			return NetworkList[BINANCE];
+		default:
+			return null;
+	}
+}
+export function getDefautRpcNetworks() {
+	return [NetworkList[HUOBI], NetworkList[BINANCE], NetworkList[ELA]];
 }

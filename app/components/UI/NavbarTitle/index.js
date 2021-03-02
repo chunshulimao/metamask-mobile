@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { TouchableOpacity, View, StyleSheet, Text } from 'react-native';
 import { colors, fontStyles } from '../../../styles/common';
-import Networks from '../../../util/networks';
+import Networks, { getColorByName } from '../../../util/networks';
 import { toggleNetworkModal } from '../../../actions/modals';
 import { strings } from '../../../../locales/i18n';
 import Device from '../../../util/Device';
@@ -89,7 +89,9 @@ class NavbarTitle extends PureComponent {
 	render = () => {
 		const { network, title, translate } = this.props;
 		let name = null;
-		const color = (Networks[network.provider.type] && Networks[network.provider.type].color) || null;
+		const color =
+			(Networks[network.provider.type] && Networks[network.provider.type].color) ||
+			getColorByName(network.provider.nickname);
 
 		if (network.provider.nickname) {
 			name = network.provider.nickname;

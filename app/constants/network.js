@@ -4,3 +4,6 @@ export const KOVAN = 'kovan';
 export const RINKEBY = 'rinkeby';
 export const GOERLI = 'goerli';
 export const RPC = 'rpc';
+export const ELA = 'ela';
+export const HUOBI = 'huobi';
+export const BINANCE = 'binance';
