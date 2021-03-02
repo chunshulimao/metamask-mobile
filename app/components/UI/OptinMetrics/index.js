@@ -121,7 +121,7 @@ class OptinMetrics extends PureComponent {
 		clearOnboardingEvents: PropTypes.func
 	};
 
-	actionsList = [1, 2, 3, 4, 5].map(value => ({
+	actionsList = [3, 4, 5].map(value => ({
 		action: value <= 2 ? 0 : 1,
 		description: strings(`privacy_policy.action_description_${value}`)
 	}));
@@ -238,29 +238,29 @@ class OptinMetrics extends PureComponent {
 				<ScrollView style={styles.root}>
 					<View style={styles.wrapper}>
 						<Text style={styles.title}>{strings('privacy_policy.description_title')}</Text>
-						<Text style={styles.content}>{strings('privacy_policy.description_content_1')}</Text>
+						{/*<Text style={styles.content}>{strings('privacy_policy.description_content_1')}</Text>*/}
 						<Text style={styles.content}>{strings('privacy_policy.description_content_2')}</Text>
 						{this.actionsList.map((action, i) => this.renderAction(action, i))}
-						{this.renderPrivacyPolicy()}
+						{/*{this.renderPrivacyPolicy()}*/}
 					</View>
 
 					<View style={styles.actionContainer}>
 						<StyledButton
 							containerStyle={[styles.button, styles.cancel]}
-							type={'cancel'}
+							type={'confirm'}
 							onPress={this.onCancel}
 							testID={'cancel-button'}
 						>
 							{strings('privacy_policy.decline')}
 						</StyledButton>
-						<StyledButton
-							containerStyle={[styles.button, styles.confirm]}
-							type={'confirm'}
-							onPress={this.onConfirm}
-							testID={'agree-button'}
-						>
-							{strings('privacy_policy.agree')}
-						</StyledButton>
+						{/*<StyledButton*/}
+						{/*	containerStyle={[styles.button, styles.confirm]}*/}
+						{/*	type={'confirm'}*/}
+						{/*	onPress={this.onConfirm}*/}
+						{/*	testID={'agree-button'}*/}
+						{/*>*/}
+						{/*	{strings('privacy_policy.agree')}*/}
+						{/*</StyledButton>*/}
 					</View>
 				</ScrollView>
 			</SafeAreaView>
