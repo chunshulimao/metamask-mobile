@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { ActivityIndicator, InteractionManager, View, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
-import Networks, { isKnownNetwork } from '../../../util/networks';
+import Networks, { getDefautRpcNetworks, isKnownNetwork } from '../../../util/networks';
 import { connect } from 'react-redux';
 import { colors } from '../../../styles/common';
 import AssetOverview from '../../UI/AssetOverview';
@@ -128,7 +128,14 @@ class Asset extends PureComponent {
 
 	ethFilter = tx => {
 		const { selectedAddress, networkType } = this.props;
-		const networkId = Networks[networkType].networkId;
+		let networkId = Networks[networkType].networkId;
+		const { provider } = Engine.context.NetworkController.state;
+
+		const rpc = getDefautRpcNetworks().find(({ rpcUrl }) => rpcUrl === provider.rpcTarget);
+		if (rpc) {
+			networkId = rpc.networkId;
+		}
+
 		const {
 			transaction: { from, to },
 			isTransfer,

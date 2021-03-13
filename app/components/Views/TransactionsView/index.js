@@ -7,7 +7,7 @@ import Engine from '../../../core/Engine';
 import { showAlert } from '../../../actions/alert';
 import { colors } from '../../../styles/common';
 import Transactions from '../../UI/Transactions';
-import Networks, { isKnownNetwork } from '../../../util/networks';
+import Networks, { getDefautRpcNetworks, isKnownNetwork } from '../../../util/networks';
 import { safeToChecksumAddress } from '../../../util/address';
 import { RPC } from '../../../constants/network';
 
@@ -108,7 +108,13 @@ class TransactionsView extends PureComponent {
 
 	ethFilter = tx => {
 		const { selectedAddress, networkType } = this.props;
-		const networkId = Networks[networkType].networkId;
+		let networkId = Networks[networkType].networkId;
+
+		const { provider } = Engine.context.NetworkController.state;
+		const rpc = getDefautRpcNetworks().find(({ rpcUrl }) => rpcUrl === provider.rpcTarget);
+		if (rpc) {
+			networkId = rpc.networkId;
+		}
 		const {
 			transaction: { from, to },
 			isTransfer,
