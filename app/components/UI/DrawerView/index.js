@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
 	metamaskFox: {
 		height: 27,
 		width: 27,
-		marginRight: 15
+		marginRight: 0
 	},
 	metamaskName: {
 		marginTop: 4,

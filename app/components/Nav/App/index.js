@@ -124,7 +124,7 @@ const OnboardingRootNav = createStackNavigator(
  * Main app navigator which handles all the screens
  * after the user is already onboarded
  */
-const HomeNav = createDrawerNavigator(
+export const HomeNav = createDrawerNavigator(
 	{
 		Main: {
 			screen: Main

@@ -11,6 +11,7 @@ import { NavigationActions } from 'react-navigation';
 
 const LOGO_SIZE = 175;
 const styles = StyleSheet.create({
+	// eslint-disable-next-line react-native/no-unused-styles
 	metamaskName: {
 		marginTop: 10,
 		height: 25,
@@ -29,8 +30,15 @@ const styles = StyleSheet.create({
 		justifyContent: 'center'
 	},
 	animation: {
-		width: 110,
-		height: 110,
+		width: 310,
+		height: 310,
+		alignSelf: 'center',
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	animation1: {
+		width: Dimensions.get('window').width,
+		height: Dimensions.get('window').height,
 		alignSelf: 'center',
 		alignItems: 'center',
 		justifyContent: 'center'
@@ -67,7 +75,7 @@ class LockScreen extends PureComponent {
 	timedOut = false;
 	firstAnimation = React.createRef();
 	secondAnimation = React.createRef();
-	animationName = React.createRef();
+	//animationName = React.createRef();
 	opacity = new Animated.Value(1);
 	unlockAttempts = 0;
 
@@ -114,7 +122,7 @@ class LockScreen extends PureComponent {
 				await this.setState({ ready: true });
 				Logger.log('Lockscreen::unlockKeychain - state: ready');
 				this.secondAnimation && this.secondAnimation.play();
-				this.animationName && this.animationName.play();
+				// this.animationName && this.animationName.play();
 				Logger.log('Lockscreen::unlockKeychain - playing animations');
 			} else if (this.props.passwordSet) {
 				this.props.navigation.navigate('Login');
@@ -169,20 +177,20 @@ class LockScreen extends PureComponent {
 					ref={animation => {
 						this.secondAnimation = animation;
 					}}
-					style={styles.animation}
+					style={styles.animation1}
 					loop={false}
 					source={require('../../../animations/fox-in.json')}
 					onAnimationFinish={this.onAnimationFinished}
 				/>
-				<LottieView
+				{/*		<LottieView
 					// eslint-disable-next-line react/jsx-no-bind
 					ref={animation => {
 						this.animationName = animation;
 					}}
 					style={styles.metamaskName}
 					loop={false}
-					source={require('../../../animations/wordmark.json')}
-				/>
+					source={require('../../../animations/bounce.json')}
+				/>*/}
 			</View>
 		);
 	}

@@ -36,6 +36,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: colors.white
 	},
+	// eslint-disable-next-line react-native/no-unused-styles
 	metamaskName: {
 		marginTop: 10,
 		height: 25,
@@ -56,8 +57,15 @@ const styles = StyleSheet.create({
 		justifyContent: 'center'
 	},
 	animation: {
-		width: 110,
-		height: 110,
+		width: 310,
+		height: 310,
+		alignSelf: 'center',
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	animation1: {
+		width: Dimensions.get('window').width,
+		height: Dimensions.get('window').height,
 		alignSelf: 'center',
 		alignItems: 'center',
 		justifyContent: 'center'
@@ -75,7 +83,7 @@ const Entry = props => {
 	const [viewToGo, setViewToGo] = useState(null);
 
 	const animation = useRef(null);
-	const animationName = useRef(null);
+	//const animationName = useRef(null);
 	const opacity = new Animated.Value(1);
 
 	const onAnimationFinished = useCallback(() => {
@@ -100,10 +108,10 @@ const Entry = props => {
 			setViewToGo(viewToGo);
 			if (Device.isAndroid()) {
 				animation && animation.current ? animation.current.play(0, 25) : onAnimationFinished();
-				animationName && animationName.current && animationName.current.play();
+				//animationName && animationName.current && animationName.current.play();
 			} else {
 				animation && animation.current && animation.current.play();
-				animation && animation.current && animationName.current.play();
+				//animation && animation.current && animationName.current.play();
 			}
 		},
 		[onAnimationFinished]
@@ -130,14 +138,18 @@ const Entry = props => {
 				if (!metricsOptIn) {
 					animateAndGoTo('OptinMetrics');
 				} else if (onboardingWizard) {
+					console.log('3333');
 					animateAndGoTo('HomeNav');
+					//animateAndGoTo('Tabbar');
 				} else {
+					console.log('wwww');
 					props.setOnboardingWizardStep(1);
 					animateAndGoTo('WalletView');
 				}
 			} else if (props.passwordSet) {
 				animateAndGoTo('Login');
 			} else {
+				console.log('111');
 				await KeyringController.submitPassword('');
 				await SecureKeychain.resetGenericPassword();
 				props.navigation.navigate('HomeNav');
@@ -194,17 +206,17 @@ const Entry = props => {
 			<View style={styles.foxAndName}>
 				<LottieView
 					ref={animation}
-					style={styles.animation}
+					style={styles.animation1}
 					loop={false}
 					source={require('../../../animations/fox-in.json')}
 					onAnimationFinish={onAnimationFinished}
 				/>
-				<LottieView
+				{/*<LottieView
 					ref={animationName}
 					style={styles.metamaskName}
 					loop={false}
-					source={require('../../../animations/wordmark.json')}
-				/>
+					source={require('../../../animations/bounce.json')}
+				/>*/}
 			</View>
 		);
 	};
