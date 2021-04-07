@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
+	// eslint-disable-next-line react-native/no-unused-styles
 	animation1: {
 		width: Dimensions.get('window').width,
 		height: Dimensions.get('window').height,
@@ -206,9 +207,9 @@ const Entry = props => {
 			<View style={styles.foxAndName}>
 				<LottieView
 					ref={animation}
-					style={styles.animation1}
+					style={styles.animation}
 					loop={false}
-					source={require('../../../animations/fox-in.json')}
+					source={require('../../../animations/bounce.json')}
 					onAnimationFinish={onAnimationFinished}
 				/>
 				{/*<LottieView

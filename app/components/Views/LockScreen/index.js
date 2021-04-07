@@ -36,6 +36,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
+	// eslint-disable-next-line react-native/no-unused-styles
 	animation1: {
 		width: Dimensions.get('window').width,
 		height: Dimensions.get('window').height,
@@ -177,9 +178,9 @@ class LockScreen extends PureComponent {
 					ref={animation => {
 						this.secondAnimation = animation;
 					}}
-					style={styles.animation1}
+					style={styles.animation}
 					loop={false}
-					source={require('../../../animations/fox-in.json')}
+					source={require('../../../animations/bounce.json')}
 					onAnimationFinish={this.onAnimationFinished}
 				/>
 				{/*		<LottieView
