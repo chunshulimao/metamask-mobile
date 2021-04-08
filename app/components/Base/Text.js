@@ -43,6 +43,12 @@ const style = StyleSheet.create({
 	},
 	strikethrough: {
 		textDecorationLine: 'line-through'
+	},
+	underline: {
+		textDecorationLine: 'underline'
+	},
+	noMargin: {
+		marginVertical: 0
 	}
 });
 
@@ -59,7 +65,9 @@ const Text = ({
 	disclaimer,
 	link,
 	strikethrough,
+	underline,
 	style: externalStyle,
+	noMargin,
 	...props
 }) => (
 	<RNText
@@ -76,6 +84,8 @@ const Text = ({
 			modal && style.modal,
 			link && style.link,
 			strikethrough && style.strikethrough,
+			underline && style.underline,
+			noMargin && style.noMargin,
 			externalStyle
 		]}
 		{...props}
@@ -95,6 +105,7 @@ Text.defaultProps = {
 	upper: false,
 	link: false,
 	strikethrough: false,
+	underline: false,
 	style: undefined
 };
 
@@ -149,6 +160,14 @@ Text.propTypes = {
 	 * Applies a strikethrough decoration
 	 */
 	strikethrough: PropTypes.bool,
+	/**
+	 * Applies a underline decoration
+	 */
+	underline: PropTypes.bool,
+	/**
+	 * Removes the vertical margin
+	 */
+	noMargin: PropTypes.bool,
 	/**
 	 * Any other external style defined in props will be applied
 	 */

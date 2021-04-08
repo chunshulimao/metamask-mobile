@@ -10,13 +10,13 @@ import ActionSheet from 'react-native-actionsheet';
 import { renderFromTokenMinimalUnit, balanceToFiat } from '../../../util/number';
 import Engine from '../../../core/Engine';
 import AssetElement from '../AssetElement';
-import FadeIn from 'react-native-fade-in-image';
 import { connect } from 'react-redux';
 import { safeToChecksumAddress } from '../../../util/address';
 import Analytics from '../../../core/Analytics';
 import { ANALYTICS_EVENT_OPTS } from '../../../util/analytics';
 import StyledButton from '../StyledButton';
 import { allowedToBuy } from '../FiatOrders';
+import NetworkMainAssetLogo from '../NetworkMainAssetLogo';
 
 const styles = StyleSheet.create({
 	wrapper: {
@@ -94,8 +94,6 @@ const styles = StyleSheet.create({
 	}
 });
 
-const ethLogo = require('../../../images/eth-logo.png'); // eslint-disable-line
-
 /**
  * View that renders a list of ERC-20 Tokens
  */
@@ -135,9 +133,9 @@ class Tokens extends PureComponent {
 		 */
 		primaryCurrency: PropTypes.string,
 		/**
-		 * Network id
+		 * Chain id
 		 */
-		network: PropTypes.string
+		chainId: PropTypes.string
 	};
 
 	actionSheet = null;
@@ -199,9 +197,7 @@ class Tokens extends PureComponent {
 				asset={asset}
 			>
 				{asset.isETH && !asset.isRpc ? (
-					<FadeIn placeholderStyle={{ backgroundColor: colors.white }}>
-						<Image source={ethLogo} style={styles.ethLogo} testID={'eth-logo'} />
-					</FadeIn>
+					<NetworkMainAssetLogo big style={styles.ethLogo} testID={'eth-logo'} />
 				) : asset.isRpc ? (
 					<Image source={logo} style={styles.ethLogo} />
 				) : (
@@ -228,8 +224,8 @@ class Tokens extends PureComponent {
 	};
 
 	renderBuyEth() {
-		const { tokens, network, tokenBalances } = this.props;
-		if (!allowedToBuy(network)) {
+		const { tokens, chainId, tokenBalances } = this.props;
+		if (!allowedToBuy(chainId)) {
 			return null;
 		}
 		const eth = tokens.find(token => token.isETH);
@@ -308,7 +304,7 @@ class Tokens extends PureComponent {
 }
 
 const mapStateToProps = state => ({
-	network: state.engine.backgroundState.NetworkController.network,
+	chainId: state.engine.backgroundState.NetworkController.provider.chainId,
 	currentCurrency: state.engine.backgroundState.CurrencyRateController.currentCurrency,
 	conversionRate: state.engine.backgroundState.CurrencyRateController.conversionRate,
 	primaryCurrency: state.settings.primaryCurrency,

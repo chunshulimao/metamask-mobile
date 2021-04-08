@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, InteractionManager } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, InteractionManager } from 'react-native';
 import ActionView from '../../UI/ActionView';
 import Clipboard from '@react-native-community/clipboard';
 import PropTypes from 'prop-types';
 import { getApproveNavbar } from '../../UI/Navbar';
-import { colors, fontStyles, baseStyles } from '../../../styles/common';
+import { colors, fontStyles } from '../../../styles/common';
 import { connect } from 'react-redux';
 import { getHost } from '../../../util/browser';
 import contractMap from '@metamask/contract-metadata';
@@ -13,31 +13,32 @@ import Engine from '../../../core/Engine';
 import { strings } from '../../../../locales/i18n';
 import { setTransactionObject } from '../../../actions/transaction';
 import { util } from '@metamask/controllers';
-import { renderFromWei, weiToFiatNumber, fromTokenMinimalUnit } from '../../../util/number';
+import { renderFromWei, weiToFiatNumber, fromTokenMinimalUnit, toTokenMinimalUnit } from '../../../util/number';
 import currencySymbols from '../../../util/currency-symbols.json';
 import {
 	getTicker,
-	decodeTransferData,
 	getNormalizedTxState,
 	getActiveTabUrl,
-	getMethodData
+	getMethodData,
+	decodeApproveData,
+	generateApproveData
 } from '../../../util/transactions';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { showAlert } from '../../../actions/alert';
 import Analytics from '../../../core/Analytics';
 import { ANALYTICS_EVENT_OPTS } from '../../../util/analytics';
+import AnalyticsV2 from '../../../util/analyticsV2';
 import TransactionHeader from '../../UI/TransactionHeader';
-import ConnectHeader from '../../UI/ConnectHeader';
 import AccountInfoCard from '../../UI/AccountInfoCard';
 import IonicIcon from 'react-native-vector-icons/Ionicons';
 import TransactionReviewDetailsCard from '../../UI/TransactionReview/TransactionReivewDetailsCard';
-import StyledButton from '../../UI/StyledButton';
 import Device from '../../../util/Device';
 import AppConstants from '../../../core/AppConstants';
 import { WALLET_CONNECT_ORIGIN } from '../../../util/walletconnect';
 import { withNavigation } from 'react-navigation';
 import { getNetworkName, isMainNet } from '../../../util/networks';
 import { capitalize } from '../../../util/format';
+import scaling from '../../../util/scaling';
+import EditPermission from './EditPermission';
 
 const { hexToBN } = util;
 const styles = StyleSheet.create({
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		...fontStyles.bold,
-		fontSize: 24,
+		fontSize: scaling.scale(24),
 		textAlign: 'center',
 		color: colors.black,
 		lineHeight: 34,
@@ -74,10 +75,6 @@ const styles = StyleSheet.create({
 		color: colors.black,
 		lineHeight: 20,
 		paddingHorizontal: 16
-	},
-	editPermissionWrapper: {
-		paddingHorizontal: 16,
-		paddingBottom: 16
 	},
 	editPermissionText: {
 		...fontStyles.bold,
@@ -97,18 +94,12 @@ const styles = StyleSheet.create({
 		color: colors.blue,
 		fontSize: 12,
 		lineHeight: 16,
-		marginTop: 20,
+		marginTop: 8,
 		textAlign: 'center'
 	},
 	actionTouchable: {
 		flexDirection: 'column',
 		alignItems: 'center'
-	},
-	sectionExplanationText: {
-		...fontStyles.normal,
-		fontSize: 12,
-		color: colors.grey500,
-		marginVertical: 6
 	},
 	sectionLeft: {
 		...fontStyles.bold,
@@ -124,72 +115,7 @@ const styles = StyleSheet.create({
 		textTransform: 'uppercase',
 		textAlign: 'right'
 	},
-	option: {
-		flexDirection: 'row',
-		marginVertical: 8
-	},
-	optionText: {
-		...fontStyles.normal,
-		fontSize: 14,
-		lineHeight: 20
-	},
-	touchableOption: {
-		flexDirection: 'row'
-	},
-	selectedCircle: {
-		width: 8,
-		height: 8,
-		borderRadius: 8 / 2,
-		margin: 3,
-		backgroundColor: colors.blue
-	},
-	outSelectedCircle: {
-		width: 18,
-		height: 18,
-		borderRadius: 18 / 2,
-		borderWidth: 2,
-		borderColor: colors.blue
-	},
-	circle: {
-		width: 18,
-		height: 18,
-		borderRadius: 18 / 2,
-		backgroundColor: colors.white,
-		opacity: 1,
-		borderWidth: 2,
-		borderColor: colors.grey200
-	},
-	input: {
-		padding: 12,
-		borderColor: colors.grey200,
-		borderRadius: 10,
-		borderWidth: 2
-	},
-	spendLimitContent: {
-		marginLeft: 8,
-		flex: 1
-	},
-	spendLimitTitle: {
-		...fontStyles.bold,
-		color: colors.black,
-		fontSize: 14,
-		lineHeight: 20,
-		marginBottom: 8
-	},
-	spendLimitSubtitle: {
-		...fontStyles.normal,
-		fontSize: 12,
-		lineHeight: 18,
-		color: colors.grey500
-	},
-	textBlue: {
-		color: colors.blue
-	},
-	textBlack: {
-		color: colors.black
-	},
 	errorWrapper: {
-		// marginHorizontal: 24,
 		marginTop: 12,
 		paddingHorizontal: 10,
 		paddingVertical: 8,
@@ -280,6 +206,10 @@ class ApproveTransactionReview extends PureComponent {
 		 */
 		gasError: PropTypes.string,
 		/**
+		 * Warning coming from high gas set in CustomGas component
+		 */
+		warningGasPriceHigh: PropTypes.string,
+		/**
 		 * Primary currency, either ETH or Fiat
 		 */
 		primaryCurrency: PropTypes.string,
@@ -298,7 +228,11 @@ class ApproveTransactionReview extends PureComponent {
 		/**
 		 * True if transaction is over the available funds
 		 */
-		over: PropTypes.bool
+		over: PropTypes.bool,
+		/**
+		 * Function to set analytics params
+		 */
+		onSetAnalyticsParams: PropTypes.func
 	};
 
 	state = {
@@ -313,7 +247,9 @@ class ApproveTransactionReview extends PureComponent {
 		spendLimitCustomValue: undefined,
 		ticker: getTicker(this.props.ticker),
 		viewDetails: false,
-		spenderAddress: '0x...'
+		spenderAddress: '0x...',
+		transaction: this.props.transaction,
+		token: {}
 	};
 
 	customSpendLimitInput = React.createRef();
@@ -332,7 +268,6 @@ class ApproveTransactionReview extends PureComponent {
 			try {
 				tokenDecimals = await AssetsContractController.getTokenDecimals(to);
 				tokenSymbol = await AssetsContractController.getAssetSymbol(to);
-				tokenDecimals = await AssetsContractController.getTokenDecimals(to);
 			} catch (e) {
 				tokenSymbol = 'ERC20 Token';
 				tokenDecimals = 18;
@@ -341,23 +276,30 @@ class ApproveTransactionReview extends PureComponent {
 			tokenSymbol = contract.symbol;
 			tokenDecimals = contract.decimals;
 		}
-		const [spenderAddress, , originalApproveAmount] = decodeTransferData('transfer', data);
-		const approveAmount = fromTokenMinimalUnit(hexToBN(originalApproveAmount), tokenDecimals);
+		const { spenderAddress, encodedAmount } = decodeApproveData(data);
+		const approveAmount = fromTokenMinimalUnit(hexToBN(encodedAmount), tokenDecimals);
 		const totalGas = gas?.mul(gasPrice);
 		const { name: method } = await getMethodData(data);
 
-		this.setState({
-			host,
-			method,
-			originalApproveAmount: approveAmount,
-			tokenSymbol,
-			totalGas: renderFromWei(totalGas),
-			totalGasFiat: weiToFiatNumber(totalGas, conversionRate),
-			spenderAddress
-		});
+		this.setState(
+			{
+				host,
+				method,
+				originalApproveAmount: approveAmount,
+				tokenSymbol,
+				token: { symbol: tokenSymbol, decimals: tokenDecimals },
+				totalGas: renderFromWei(totalGas),
+				totalGasFiat: weiToFiatNumber(totalGas, conversionRate),
+				spenderAddress,
+				encodedAmount
+			},
+			() => {
+				AnalyticsV2.trackEvent(AnalyticsV2.ANALYTICS_EVENTS.APPROVAL_STARTED, this.getAnalyticsParams());
+			}
+		);
 	};
 
-	componentDidUpdate(previousProps, previousState) {
+	componentDidUpdate(previousProps) {
 		const {
 			transaction: { gas, gasPrice },
 			conversionRate
@@ -374,6 +316,29 @@ class ApproveTransactionReview extends PureComponent {
 			});
 		}
 	}
+
+	getAnalyticsParams = () => {
+		const { activeTabUrl, transaction, onSetAnalyticsParams } = this.props;
+		const { tokenSymbol, originalApproveAmount, encodedAmount } = this.state;
+		const { NetworkController } = Engine.context;
+		const { chainId, type } = NetworkController?.state?.provider || {};
+		const isDapp = !Object.values(AppConstants.DEEPLINKS).includes(transaction.origin);
+		const unlimited = encodedAmount === 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+		const params = {
+			dapp_host_name: transaction?.origin,
+			dapp_url: isDapp ? activeTabUrl : undefined,
+			network_name: type,
+			chain_id: chainId,
+			active_currency: { value: tokenSymbol, anonymous: true },
+			number_tokens_requested: { value: originalApproveAmount, anonymous: true },
+			unlimited_permission_requested: unlimited,
+			referral_type: isDapp ? 'dapp' : transaction?.origin
+		};
+		// Send analytics params to parent component so it's available when cancelling and confirming
+		onSetAnalyticsParams && onSetAnalyticsParams(params);
+
+		return params;
+	};
 
 	trackApproveEvent = event => {
 		const { transaction, tokensLength, accountsLength, providerType } = this.props;
@@ -400,6 +365,7 @@ class ApproveTransactionReview extends PureComponent {
 
 	toggleEditPermission = () => {
 		const { editPermissionVisible } = this.state;
+		this.onPressSpendLimitUnlimitedSelected();
 		!editPermissionVisible && this.trackApproveEvent(ANALYTICS_EVENT_OPTS.DAPP_APPROVE_SCREEN_EDIT_PERMISSION);
 		this.setState({ editPermissionVisible: !editPermissionVisible });
 	};
@@ -440,6 +406,29 @@ class ApproveTransactionReview extends PureComponent {
 		onModeChange && onModeChange('edit');
 	};
 
+	onEditPermissionSetAmount = () => {
+		const {
+			token,
+			spenderAddress,
+			spendLimitUnlimitedSelected,
+			originalApproveAmount,
+			spendLimitCustomValue,
+			transaction
+		} = this.state;
+		const uint = toTokenMinimalUnit(
+			spendLimitUnlimitedSelected ? originalApproveAmount : spendLimitCustomValue,
+			token.decimals
+		).toString();
+		const approvalData = generateApproveData({
+			spender: spenderAddress,
+			value: Number(uint).toString(16)
+		});
+		const newApprovalTransaction = { ...transaction, data: approvalData };
+		setTransactionObject(newApprovalTransaction);
+		this.toggleEditPermission();
+		AnalyticsV2.trackEvent(AnalyticsV2.ANALYTICS_EVENTS.APPROVAL_PERMISSION_UPDATED, this.getAnalyticsParams());
+	};
+
 	renderEditPermission = () => {
 		const {
 			host,
@@ -448,114 +437,32 @@ class ApproveTransactionReview extends PureComponent {
 			spendLimitCustomValue,
 			originalApproveAmount
 		} = this.state;
+
 		return (
-			<View style={[baseStyles.section, styles.editPermissionWrapper]}>
-				<KeyboardAwareScrollView resetScrollToCoords={{ x: 0, y: 0 }}>
-					<ConnectHeader action={this.toggleEditPermission} title={strings('spend_limit_edition.title')} />
-					<View>
-						<Text style={styles.spendLimitTitle}>{strings('spend_limit_edition.spend_limit')}</Text>
-						<Text style={styles.spendLimitSubtitle}>
-							{strings('spend_limit_edition.allow')}
-							<Text style={fontStyles.bold}>{` ${host} `}</Text>
-							{strings('spend_limit_edition.allow_explanation')}
-						</Text>
-
-						<View style={styles.option}>
-							<TouchableOpacity
-								onPress={this.onPressSpendLimitUnlimitedSelected}
-								style={styles.touchableOption}
-							>
-								{spendLimitUnlimitedSelected ? (
-									<View style={styles.outSelectedCircle}>
-										<View style={styles.selectedCircle} />
-									</View>
-								) : (
-									<View style={styles.circle} />
-								)}
-							</TouchableOpacity>
-							<View style={styles.spendLimitContent}>
-								<Text
-									style={[
-										styles.optionText,
-										spendLimitUnlimitedSelected ? styles.textBlue : styles.textBlack
-									]}
-								>
-									{strings('spend_limit_edition.proposed')}
-								</Text>
-								<Text style={styles.sectionExplanationText}>
-									{strings('spend_limit_edition.requested_by')}
-									<Text style={fontStyles.bold}>{` ${host}`}</Text>
-								</Text>
-								<Text
-									style={[styles.optionText, styles.textBlack]}
-								>{`${originalApproveAmount} ${tokenSymbol}`}</Text>
-							</View>
-						</View>
-
-						<View style={styles.option}>
-							<TouchableOpacity
-								onPress={this.onPressSpendLimitCustomSelected}
-								style={styles.touchableOption}
-							>
-								{spendLimitUnlimitedSelected ? (
-									<View style={styles.circle} />
-								) : (
-									<View style={styles.outSelectedCircle}>
-										<View style={styles.selectedCircle} />
-									</View>
-								)}
-							</TouchableOpacity>
-							<View style={styles.spendLimitContent}>
-								<Text
-									style={[
-										styles.optionText,
-										!spendLimitUnlimitedSelected ? styles.textBlue : styles.textBlack
-									]}
-								>
-									{strings('spend_limit_edition.custom_spend_limit')}
-								</Text>
-								<Text style={styles.sectionExplanationText}>
-									{strings('spend_limit_edition.max_spend_limit')}
-								</Text>
-								<TextInput
-									ref={this.customSpendLimitInput}
-									autoCapitalize="none"
-									keyboardType="numeric"
-									autoCorrect={false}
-									onChangeText={this.onSpendLimitCustomValueChange}
-									placeholder={`100 ${tokenSymbol}`}
-									placeholderTextColor={colors.grey100}
-									spellCheck={false}
-									style={styles.input}
-									value={spendLimitCustomValue}
-									numberOfLines={1}
-									onFocus={this.onPressSpendLimitCustomSelected}
-									returnKeyType={'done'}
-								/>
-								<Text style={styles.sectionExplanationText}>
-									{strings('spend_limit_edition.minimum', { tokenSymbol })}
-								</Text>
-							</View>
-						</View>
-					</View>
-					<StyledButton
-						// testID={cancelTestID}
-						type="confirm"
-						onPress={this.toggleEditPermission}
-					>
-						{strings('transaction.set_gas')}
-					</StyledButton>
-				</KeyboardAwareScrollView>
-			</View>
+			<EditPermission
+				host={host}
+				spendLimitUnlimitedSelected={spendLimitUnlimitedSelected}
+				tokenSymbol={tokenSymbol}
+				spendLimitCustomValue={spendLimitCustomValue}
+				originalApproveAmount={originalApproveAmount}
+				onSetApprovalAmount={this.onEditPermissionSetAmount}
+				onSpendLimitCustomValueChange={this.onSpendLimitCustomValueChange}
+				onPressSpendLimitUnlimitedSelected={this.onPressSpendLimitUnlimitedSelected}
+				onPressSpendLimitCustomSelected={this.onPressSpendLimitCustomSelected}
+				toggleEditPermission={this.toggleEditPermission}
+			/>
 		);
 	};
 
 	renderTransactionReview = () => {
-		const { host, method, viewData, tokenSymbol, originalApproveAmount } = this.state;
 		const {
+			host,
+			method,
+			viewData,
+			tokenSymbol,
+			originalApproveAmount,
 			transaction: { to, data }
-		} = this.props;
-
+		} = this.state;
 		return (
 			<TransactionReviewDetailsCard
 				toggleViewDetails={this.toggleViewDetails}
@@ -587,6 +494,11 @@ class ApproveTransactionReview extends PureComponent {
 		onCancel && onCancel();
 	};
 
+	onConfirmPress = () => {
+		const { onConfirm } = this.props;
+		onConfirm && onConfirm();
+	};
+
 	gotoFaucet = () => {
 		const mmFaucetUrl = 'https://faucet.metamask.io/';
 		InteractionManager.runAfterInteractions(() => {
@@ -616,7 +528,8 @@ class ApproveTransactionReview extends PureComponent {
 			activeTabUrl,
 			transaction: { origin },
 			network,
-			over
+			over,
+			warningGasPriceHigh
 		} = this.props;
 		const is_main_net = isMainNet(network);
 		const isFiat = primaryCurrency.toLowerCase() === 'fiat';
@@ -661,8 +574,8 @@ class ApproveTransactionReview extends PureComponent {
 									confirmButtonMode="confirm"
 									cancelText={strings('transaction.reject')}
 									confirmText={strings('transactions.approve')}
-									onCancelPress={this.props.onCancel}
-									onConfirmPress={this.props.onConfirm}
+									onCancelPress={this.onCancelPress}
+									onConfirmPress={this.onConfirmPress}
 								>
 									<View style={styles.actionViewChildren}>
 										<TouchableOpacity
@@ -695,18 +608,6 @@ class ApproveTransactionReview extends PureComponent {
 														</View>
 													</View>
 												</TouchableOpacity>
-												{!gasError && (
-													<TouchableOpacity
-														style={styles.actionTouchable}
-														onPress={this.toggleViewDetails}
-													>
-														<View style={styles.viewDetailsWrapper}>
-															<Text style={styles.viewDetailsText}>
-																{strings('spend_limit_edition.view_details')}
-															</Text>
-														</View>
-													</TouchableOpacity>
-												)}
 												{gasError && (
 													<View style={styles.errorWrapper}>
 														<TouchableOpacity onPress={errorPress}>
@@ -719,6 +620,23 @@ class ApproveTransactionReview extends PureComponent {
 															)}
 														</TouchableOpacity>
 													</View>
+												)}
+												{!!warningGasPriceHigh && (
+													<View style={styles.errorWrapper}>
+														<Text style={styles.error}>{warningGasPriceHigh}</Text>
+													</View>
+												)}
+												{!gasError && (
+													<TouchableOpacity
+														style={styles.actionTouchable}
+														onPress={this.toggleViewDetails}
+													>
+														<View>
+															<Text style={styles.viewDetailsText}>
+																{strings('spend_limit_edition.view_details')}
+															</Text>
+														</View>
+													</TouchableOpacity>
 												)}
 											</View>
 										</View>

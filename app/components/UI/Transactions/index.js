@@ -53,6 +53,7 @@ const ROW_HEIGHT = (Device.isIos() ? 95 : 100) + StyleSheet.hairlineWidth;
  */
 class Transactions extends PureComponent {
 	static propTypes = {
+		assetSymbol: PropTypes.string,
 		/**
 		 * Map of accounts to information objects including balances
 		 */
@@ -171,7 +172,8 @@ class Transactions extends PureComponent {
 	scrollToIndex = index => {
 		if (!this.scrolling && (this.props.headerHeight || index)) {
 			this.scrolling = true;
-			this.flatList.current.scrollToIndex({ index, animated: true });
+			// eslint-disable-next-line no-unused-expressions
+			this.flatList?.current?.scrollToIndex({ index, animated: true });
 			setTimeout(() => {
 				this.scrolling = false;
 			}, 300);
@@ -260,31 +262,28 @@ class Transactions extends PureComponent {
 	};
 
 	speedUpTransaction = () => {
-		InteractionManager.runAfterInteractions(() => {
-			try {
-				Engine.context.TransactionController.speedUpTransaction(this.speedUpTxId);
-			} catch (e) {
-				// ignore because transaction already went through
-			}
-			this.onSpeedUpCompleted();
-		});
+		try {
+			Engine.context.TransactionController.speedUpTransaction(this.speedUpTxId);
+		} catch (e) {
+			// ignore because transaction already went through
+		}
+		this.onSpeedUpCompleted();
 	};
 
 	cancelTransaction = () => {
-		InteractionManager.runAfterInteractions(() => {
-			try {
-				Engine.context.TransactionController.stopTransaction(this.cancelTxId);
-			} catch (e) {
-				// ignore because transaction already went through
-			}
-			this.onCancelCompleted();
-		});
+		try {
+			Engine.context.TransactionController.stopTransaction(this.cancelTxId);
+		} catch (e) {
+			// ignore because transaction already went through
+		}
+		this.onCancelCompleted();
 	};
 
 	renderItem = ({ item, index }) => (
 		<TransactionElement
 			tx={item}
 			i={index}
+			assetSymbol={this.props.assetSymbol}
 			onSpeedUpAction={this.onSpeedUpAction}
 			onCancelAction={this.onCancelAction}
 			testID={'txn-item'}

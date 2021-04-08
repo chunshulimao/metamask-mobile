@@ -1,12 +1,40 @@
 /**
  * Collection of utility functions for consistent formatting and conversion
  */
-import { addHexPrefix, BN } from 'ethereumjs-util';
+import { addHexPrefix, BN, stripHexPrefix } from 'ethereumjs-util';
+import { utils as ethersUtils } from 'ethers';
 import convert from 'ethjs-unit';
 import { util } from '@metamask/controllers';
 import numberToBN from 'number-to-bn';
 import currencySymbols from '../util/currency-symbols.json';
+import BigNumber from 'bignumber.js';
 
+// Big Number Constants
+const BIG_NUMBER_WEI_MULTIPLIER = new BigNumber('1000000000000000000');
+const BIG_NUMBER_GWEI_MULTIPLIER = new BigNumber('1000000000');
+const BIG_NUMBER_ETH_MULTIPLIER = new BigNumber('1');
+
+// Setter Maps
+const toBigNumber = {
+	hex: n => new BigNumber(stripHexPrefix(n), 16),
+	dec: n => new BigNumber(String(n), 10),
+	BN: n => new BigNumber(n.toString(16), 16)
+};
+const toNormalizedDenomination = {
+	WEI: bigNumber => bigNumber.div(BIG_NUMBER_WEI_MULTIPLIER),
+	GWEI: bigNumber => bigNumber.div(BIG_NUMBER_GWEI_MULTIPLIER),
+	ETH: bigNumber => bigNumber.div(BIG_NUMBER_ETH_MULTIPLIER)
+};
+const toSpecifiedDenomination = {
+	WEI: bigNumber => bigNumber.times(BIG_NUMBER_WEI_MULTIPLIER).decimalPlaces(),
+	GWEI: bigNumber => bigNumber.times(BIG_NUMBER_GWEI_MULTIPLIER).decimalPlaces(9),
+	ETH: bigNumber => bigNumber.times(BIG_NUMBER_ETH_MULTIPLIER).decimalPlaces(9)
+};
+const baseChange = {
+	hex: n => n.toString(16),
+	dec: n => new BigNumber(n).toString(10),
+	BN: n => new BN(n.toString(16))
+};
 /**
  * Converts a BN object to a hex string with a '0x' prefix
  *
@@ -55,6 +83,30 @@ export function fromTokenMinimalUnit(minimalInput, decimals) {
 		value = '-' + value;
 	}
 	return value;
+}
+
+const INTEGER_REGEX = /^-?\d*(\.0+|\.)?$/;
+
+/**
+ * Converts token minimal unit to readable string value
+ *
+ * @param {string} minimalInput - Token minimal unit to convert
+ * @param {number} decimals - Token decimals to convert
+ * @returns {string} - String containing the new number
+ */
+export function fromTokenMinimalUnitString(minimalInput, decimals) {
+	if (typeof minimalInput !== 'string') {
+		throw new TypeError('minimalInput must be a string');
+	}
+
+	const tokenFormat = ethersUtils.formatUnits(minimalInput, decimals);
+	const isInteger = Boolean(INTEGER_REGEX.exec(tokenFormat));
+
+	const [integerPart, decimalPart] = tokenFormat.split('.');
+	if (isInteger) {
+		return integerPart;
+	}
+	return `${integerPart}.${decimalPart}`;
 }
 
 /**
@@ -296,6 +348,7 @@ export function weiToFiat(wei, conversionRate, currencyCode, decimalsToShow = 5)
 		}
 		return `0.00 ${currencyCode}`;
 	}
+	decimalsToShow = currencyCode === 'usd' && 2;
 	const value = weiToFiatNumber(wei, conversionRate, decimalsToShow);
 	if (currencySymbols[currencyCode]) {
 		return `${currencySymbols[currencyCode]}${value}`;
@@ -311,11 +364,14 @@ export function weiToFiat(wei, conversionRate, currencyCode, decimalsToShow = 5)
  * @returns {string} - Currency-formatted string
  */
 export function addCurrencySymbol(amount, currencyCode) {
+	if (currencyCode === 'usd') {
+		amount = parseFloat(amount).toFixed(2);
+	}
 	if (currencySymbols[currencyCode]) {
 		return `${currencySymbols[currencyCode]}${amount}`;
 	}
 
-	const lowercaseCurrencyCode = currencyCode.toLowerCase();
+	const lowercaseCurrencyCode = currencyCode?.toLowerCase();
 
 	if (currencySymbols[lowercaseCurrencyCode]) {
 		return `${currencySymbols[lowercaseCurrencyCode]}${amount}`;
@@ -467,3 +523,80 @@ export function isPrefixedFormattedHexString(value) {
 	}
 	return /^0x[1-9a-f]+[0-9a-f]*$/iu.test(value);
 }
+
+const converter = ({
+	value,
+	fromNumericBase,
+	fromDenomination,
+	fromCurrency,
+	toNumericBase,
+	toDenomination,
+	toCurrency,
+	numberOfDecimals,
+	conversionRate,
+	invertConversionRate,
+	roundDown
+}) => {
+	let convertedValue = fromNumericBase ? toBigNumber[fromNumericBase](value) : value;
+
+	if (fromDenomination) {
+		convertedValue = toNormalizedDenomination[fromDenomination](convertedValue);
+	}
+
+	if (fromCurrency !== toCurrency) {
+		if (conversionRate === null || conversionRate === undefined) {
+			throw new Error(
+				`Converting from ${fromCurrency} to ${toCurrency} requires a conversionRate, but one was not provided`
+			);
+		}
+		let rate = toBigNumber.dec(conversionRate);
+		if (invertConversionRate) {
+			rate = new BigNumber(1.0).div(conversionRate);
+		}
+		convertedValue = convertedValue.times(rate);
+	}
+
+	if (toDenomination) {
+		convertedValue = toSpecifiedDenomination[toDenomination](convertedValue);
+	}
+
+	if (numberOfDecimals) {
+		convertedValue = convertedValue.decimalPlaces(numberOfDecimals, BigNumber.ROUND_HALF_DOWN);
+	}
+
+	if (roundDown) {
+		convertedValue = convertedValue.decimalPlaces(roundDown, BigNumber.ROUND_DOWN);
+	}
+
+	if (toNumericBase) {
+		convertedValue = baseChange[toNumericBase](convertedValue);
+	}
+	return convertedValue;
+};
+
+export const conversionUtil = (
+	value,
+	{
+		fromCurrency = null,
+		toCurrency = fromCurrency,
+		fromNumericBase,
+		toNumericBase,
+		fromDenomination,
+		toDenomination,
+		numberOfDecimals,
+		conversionRate,
+		invertConversionRate
+	}
+) =>
+	converter({
+		fromCurrency,
+		toCurrency,
+		fromNumericBase,
+		toNumericBase,
+		fromDenomination,
+		toDenomination,
+		numberOfDecimals,
+		conversionRate,
+		invertConversionRate,
+		value: value || '0'
+	});

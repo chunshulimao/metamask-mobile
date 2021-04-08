@@ -91,7 +91,6 @@ const styles = StyleSheet.create({
 	}
 });
 
-const PRIVACY_POLICY = AppConstants.ARTICLES_URL + 'Privacy.html';
 /**
  * View that is displayed in the flow to agree to metrics
  */
@@ -121,8 +120,8 @@ class OptinMetrics extends PureComponent {
 		clearOnboardingEvents: PropTypes.func
 	};
 
-	actionsList = [3, 4, 5].map(value => ({
-		action: value <= 2 ? 0 : 1,
+	actionsList = [1, 2, 3, 4, 5, 6].map(value => ({
+		action: value <= 3 ? 0 : 1,
 		description: strings(`privacy_policy.action_description_${value}`)
 	}));
 
@@ -212,7 +211,7 @@ class OptinMetrics extends PureComponent {
 	 */
 	onPressPolicy = () => {
 		this.props.navigation.navigate('Webview', {
-			url: PRIVACY_POLICY,
+			url: AppConstants.URLS.PRIVACY_POLICY,
 			title: strings('privacy_policy.title')
 		});
 	};

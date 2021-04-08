@@ -1,3 +1,4 @@
+run yarn install
 ![MetaMask logo](logo.png?raw=true)
 
 # MetaMask

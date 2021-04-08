@@ -5,6 +5,7 @@ import { strings } from '../../locales/i18n';
 import contractMap from '@metamask/contract-metadata';
 import { safeToChecksumAddress } from './address';
 import { util } from '@metamask/controllers';
+import { swapsUtils } from '@estebanmino/controllers';
 import { hexToBN } from './number';
 import AppConstants from '../core/AppConstants';
 const { SAI_ADDRESS } = AppConstants;
@@ -22,19 +23,14 @@ export const SEND_TOKEN_ACTION_KEY = 'transfer';
 export const TRANSFER_FROM_ACTION_KEY = 'transferfrom';
 export const UNKNOWN_FUNCTION_KEY = 'unknownFunction';
 export const SMART_CONTRACT_INTERACTION_ACTION_KEY = 'smartContractInteraction';
-export const CONNEXT_DEPOSIT_ACTION_KEY = 'connextdeposit';
+export const SWAPS_TRANSACTION_ACTION_KEY = 'swapsTransaction';
 
 export const TRANSFER_FUNCTION_SIGNATURE = '0xa9059cbb';
 export const TRANSFER_FROM_FUNCTION_SIGNATURE = '0x23b872dd';
 export const APPROVE_FUNCTION_SIGNATURE = '0x095ea7b3';
-export const CONNEXT_DEPOSIT = '0xea682e37';
 export const CONTRACT_CREATION_SIGNATURE = '0x60a060405260046060527f48302e31';
 
 export const TRANSACTION_TYPES = {
-	PAYMENT_CHANNEL_DEPOSIT: 'payment_channel_deposit',
-	PAYMENT_CHANNEL_WITHDRAW: 'payment_channel_withdraw',
-	PAYMENT_CHANNEL_SENT: 'payment_channel_sent',
-	PAYMENT_CHANNEL_RECEIVED: 'payment_channel_received',
 	SENT: 'transaction_sent',
 	SENT_TOKEN: 'transaction_sent_token',
 	SENT_COLLECTIBLE: 'transaction_sent_collectible',
@@ -45,6 +41,7 @@ export const TRANSACTION_TYPES = {
 	APPROVE: 'transaction_approve'
 };
 
+const { SWAPS_CONTRACT_ADDRESS } = swapsUtils;
 /**
  * Utility class with the single responsibility
  * of caching CollectibleAddresses
@@ -62,8 +59,7 @@ const reviewActionKeys = {
 	[DEPLOY_CONTRACT_ACTION_KEY]: strings('transactions.tx_review_contract_deployment'),
 	[TRANSFER_FROM_ACTION_KEY]: strings('transactions.tx_review_transfer_from'),
 	[SMART_CONTRACT_INTERACTION_ACTION_KEY]: strings('transactions.tx_review_unknown'),
-	[APPROVE_ACTION_KEY]: strings('transactions.tx_review_approve'),
-	[CONNEXT_DEPOSIT_ACTION_KEY]: strings('transactions.tx_review_instant_payment_deposit')
+	[APPROVE_ACTION_KEY]: strings('transactions.tx_review_approve')
 };
 
 /**
@@ -74,8 +70,8 @@ const actionKeys = {
 	[TRANSFER_FROM_ACTION_KEY]: strings('transactions.sent_collectible'),
 	[DEPLOY_CONTRACT_ACTION_KEY]: strings('transactions.contract_deploy'),
 	[SMART_CONTRACT_INTERACTION_ACTION_KEY]: strings('transactions.smart_contract_interaction'),
-	[APPROVE_ACTION_KEY]: strings('transactions.approve'),
-	[CONNEXT_DEPOSIT_ACTION_KEY]: strings('transactions.instant_payment_deposit')
+	[SWAPS_TRANSACTION_ACTION_KEY]: strings('transactions.swaps_transaction'),
+	[APPROVE_ACTION_KEY]: strings('transactions.approve')
 };
 
 /**
@@ -139,7 +135,6 @@ export function generateApproveData(opts) {
 }
 
 export function decodeApproveData(data) {
-	console.log('decodeApproveData', data);
 	return {
 		spenderAddress: addHexPrefix(data.substr(34, 40)),
 		encodedAmount: data.substr(74, 138)
@@ -195,8 +190,6 @@ export async function getMethodData(data) {
 		return { name: TOKEN_METHOD_TRANSFER_FROM };
 	} else if (fourByteSignature === APPROVE_FUNCTION_SIGNATURE) {
 		return { name: TOKEN_METHOD_APPROVE };
-	} else if (fourByteSignature === CONNEXT_DEPOSIT) {
-		return { name: CONNEXT_METHOD_DEPOSIT };
 	} else if (data.substr(0, 32) === CONTRACT_CREATION_SIGNATURE) {
 		return { name: CONTRACT_METHOD_DEPLOY };
 	}
@@ -228,7 +221,6 @@ export async function isSmartContractAddress(address) {
 	}
 	const { TransactionController } = Engine.context;
 	const code = address ? await util.query(TransactionController.ethQuery, 'getCode', [address]) : undefined;
-
 	const isSmartContract = util.isSmartContractCode(code);
 	return isSmartContract;
 }
@@ -263,6 +255,7 @@ export async function isCollectibleAddress(address, tokenId) {
 export async function getTransactionActionKey(transaction) {
 	const { transaction: { data, to } = {} } = transaction;
 	if (!to) return CONTRACT_METHOD_DEPLOY;
+	if (to === SWAPS_CONTRACT_ADDRESS) return SWAPS_TRANSACTION_ACTION_KEY;
 	let ret;
 	// if data in transaction try to get method data
 	if (data && data !== '0x') {
@@ -287,10 +280,9 @@ export async function getTransactionActionKey(transaction) {
  *
  * @param {object} tx - Transaction object
  * @param {string} selectedAddress - Current account public address
- * @param {bool} paymentChannelTransaction - Whether is a payment channel transaction
  * @returns {string} - Transaction type message
  */
-export async function getActionKey(tx, selectedAddress, ticker, paymentChannelTransaction) {
+export async function getActionKey(tx, selectedAddress, ticker) {
 	if (tx && tx.isTransfer) {
 		const selfSent = safeToChecksumAddress(tx.transaction.from) === selectedAddress;
 		const translationKey = selfSent ? 'transactions.self_sent_unit' : 'transactions.received_unit';
@@ -298,11 +290,8 @@ export async function getActionKey(tx, selectedAddress, ticker, paymentChannelTr
 		if (tx.transferInformation.contractAddress === SAI_ADDRESS.toLowerCase()) tx.transferInformation.symbol = 'SAI';
 		return strings(translationKey, { unit: tx.transferInformation.symbol });
 	}
-
 	const actionKey = await getTransactionActionKey(tx);
-
 	if (actionKey === SEND_ETHER_ACTION_KEY) {
-		ticker = paymentChannelTransaction ? strings('unit.sai') : ticker;
 		const incoming = safeToChecksumAddress(tx.transaction.to) === selectedAddress;
 		const selfSent = incoming && safeToChecksumAddress(tx.transaction.from) === selectedAddress;
 		return incoming

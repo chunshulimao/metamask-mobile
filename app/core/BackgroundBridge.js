@@ -1,15 +1,16 @@
 /* eslint-disable import/no-commonjs */
 import URL from 'url-parse';
+import { NetworksChainId } from '@metamask/controllers';
+import { JsonRpcEngine } from 'json-rpc-engine';
 import { JS_POST_MESSAGE_TO_PROVIDER, JS_IFRAME_POST_MESSAGE_TO_PROVIDER } from '../util/browserScripts';
 import MobilePortStream from './MobilePortStream';
 import { setupMultiplex } from '../util/streams';
 import { createOriginMiddleware, createLoggerMiddleware } from '../util/middlewares';
 import Engine from './Engine';
-import NetworkList from '../util/networks';
+import { getAllNetworks } from '../util/networks';
 import Logger from '../util/Logger';
 import AppConstants from './AppConstants';
 
-const RpcEngine = require('json-rpc-engine');
 const createEngineStream = require('json-rpc-middleware-stream/engineStream');
 const createFilterMiddleware = require('eth-json-rpc-filters');
 const createSubscriptionManager = require('eth-json-rpc-filters/subscriptionManager');
@@ -88,10 +89,24 @@ export class BackgroundBridge extends EventEmitter {
 
 	getProviderNetworkState({ network }) {
 		const networkType = Engine.context.NetworkController.state.provider.type;
-		const chainId = Object.keys(NetworkList).indexOf(networkType) > -1 && NetworkList[networkType].chainId;
+		const networkProvider = Engine.context.NetworkController.state.provider;
+
+		const isInitialNetwork = networkType && getAllNetworks().includes(networkType);
+		let chainId;
+
+		if (isInitialNetwork) {
+			chainId = NetworksChainId[networkType];
+		} else if (networkType === 'rpc') {
+			chainId = networkProvider.chainId;
+		}
+		if (chainId && !chainId.startsWith('0x')) {
+			// Convert to hex
+			chainId = `0x${parseInt(chainId, 10).toString(16)}`;
+		}
+
 		const result = {
 			networkVersion: network,
-			chainId: chainId ? `0x${parseInt(chainId, 10).toString(16)}` : null
+			chainId
 		};
 		return result;
 	}
@@ -163,7 +178,7 @@ export class BackgroundBridge extends EventEmitter {
 	setupProviderEngine() {
 		const origin = this.hostname;
 		// setup json rpc engine stack
-		const engine = new RpcEngine();
+		const engine = new JsonRpcEngine();
 		const provider = this.provider;
 
 		const blockTracker = this.blockTracker;

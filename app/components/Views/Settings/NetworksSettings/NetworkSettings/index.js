@@ -17,6 +17,7 @@ import { jsonRpcRequest } from '../../../../../util/jsonRpcRequest';
 import Logger from '../../../../../util/Logger';
 import { isPrefixedFormattedHexString } from '../../../../../util/number';
 import AppConstants from '../../../../../core/AppConstants';
+import AnalyticsV2 from '../../../../../util/analyticsV2';
 
 const styles = StyleSheet.create({
 	wrapper: {
@@ -261,12 +262,24 @@ class NetworkSettings extends PureComponent {
 
 		if (this.validateRpcUrl()) {
 			const url = new URL(rpcUrl);
+			const decimalChainId = this.getDecimalChainId(chainId);
 			!isprivateConnection(url.hostname) && url.set('protocol', 'https:');
 			CurrencyRateController.configure({ nativeCurrency: ticker });
-			PreferencesController.addToFrequentRpcList(url.href, this.getDecimalChainId(chainId), ticker, nickname, {
+			PreferencesController.addToFrequentRpcList(url.href, decimalChainId, ticker, nickname, {
 				blockExplorerUrl
 			});
-			NetworkController.setRpcTarget(url.href, chainId, ticker, nickname);
+			NetworkController.setRpcTarget(url.href, decimalChainId, ticker, nickname);
+
+			const analyticsParamsAdd = {
+				rpc_url: url.href,
+				chain_id: decimalChainId,
+				source: 'Settings',
+				symbol: ticker,
+				block_explorer_url: blockExplorerUrl,
+				network_name: 'rpc'
+			};
+			AnalyticsV2.trackEvent(AnalyticsV2.ANALYTICS_EVENTS.NETWORK_ADDED, analyticsParamsAdd);
+
 			navigation.navigate('WalletView');
 		}
 	};

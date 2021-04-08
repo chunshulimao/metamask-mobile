@@ -17,6 +17,7 @@ import Analytics from '../../../core/Analytics';
 import { ANALYTICS_EVENT_OPTS } from '../../../util/analytics';
 import { HUOBI, MAINNET, RPC } from '../../../constants/network';
 import URL from 'url-parse';
+import AnalyticsV2 from '../../../util/analyticsV2';
 
 const styles = StyleSheet.create({
 	wrapper: {
@@ -149,7 +150,6 @@ export class NetworkList extends PureComponent {
 	getOtherNetworks = () => getAllNetworks().slice(1);
 
 	onNetworkChange = type => {
-		const { provider } = this.props;
 		requestAnimationFrame(() => {
 			this.props.onClose(false);
 			InteractionManager.runAfterInteractions(() => {
@@ -160,9 +160,11 @@ export class NetworkList extends PureComponent {
 					setTimeout(() => {
 						Engine.refreshTransactionHistory();
 					}, 1000);
-				Analytics.trackEventWithParameters(ANALYTICS_EVENT_OPTS.COMMON_SWITCHED_NETWORKS, {
-					'From Network': provider.type,
-					'To Network': type
+
+				AnalyticsV2.trackEvent(AnalyticsV2.ANALYTICS_EVENTS.NETWORK_SWITCHED, {
+					network_name: type,
+					chain_id: String(Networks[type].chainId),
+					source: 'Settings'
 				});
 			});
 		});
@@ -208,7 +210,13 @@ export class NetworkList extends PureComponent {
 		const { frequentRpcList } = this.props;
 		const { NetworkController, CurrencyRateController } = Engine.context;
 		const rpc = frequentRpcList.find(({ rpcUrl }) => rpcUrl === rpcTarget);
-		const { rpcUrl, chainId, ticker, nickname } = rpc;
+		const {
+			rpcUrl,
+			chainId,
+			ticker,
+			nickname,
+			rpcPrefs: { blockExplorerUrl }
+		} = rpc;
 
 		// If the network does not have chainId then show invalid custom network alert
 		const chainIdNumber = parseInt(chainId, 10);
@@ -220,6 +228,16 @@ export class NetworkList extends PureComponent {
 
 		CurrencyRateController.configure({ nativeCurrency: ticker });
 		NetworkController.setRpcTarget(rpcUrl, chainId, ticker, nickname);
+
+		AnalyticsV2.trackEvent(AnalyticsV2.ANALYTICS_EVENTS.NETWORK_SWITCHED, {
+			rpc_url: rpcUrl,
+			chain_id: chainId,
+			source: 'Settings',
+			symbol: ticker,
+			block_explorer_url: blockExplorerUrl,
+			network_name: 'rpc'
+		});
+
 		this.props.onClose(false);
 	};
 	/*	onSetDefaultTarget = async rpcTarget => {
